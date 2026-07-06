@@ -14,9 +14,13 @@ services:
       LOG_LEVEL: INFO
       JSON_LOGS: "true"
       WEATHER_API_URL: http://weather-service:9000
+      
       # Route traces to the local Alloy container
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
       OTEL_SERVICE_NAME: chaos-service
+      OTEL_TRACES_EXPORTER: "otlp"
+      OTEL_METRICS_EXPORTER: "none"
+      OTEL_LOGS_EXPORTER: "none"
     depends_on:
       - weather-service
       - alloy
@@ -34,6 +38,9 @@ services:
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
       OTEL_SERVICE_NAME: weather-service
+      OTEL_TRACES_EXPORTER: "otlp"
+      OTEL_METRICS_EXPORTER: "none"
+      OTEL_LOGS_EXPORTER: "none"
     depends_on:
       - alloy
 

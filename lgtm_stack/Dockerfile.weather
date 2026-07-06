@@ -8,5 +8,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY weather_service ./weather_service
 
 EXPOSE 9000
-
-CMD ["uvicorn", "weather_service.main:app", "--host", "0.0.0.0", "--port", "9000"]
+RUN opentelemetry-bootstrap -a install
+CMD ["opentelemetry-instrument", "uvicorn", "weather_service.main:app", "--host", "0.0.0.0", "--port", "9000"]
