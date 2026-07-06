@@ -1,6 +1,9 @@
 version: "3.9"
 
 services:
+  # -------------------------------------
+  # APPLICATION SERVICES
+  # -------------------------------------
   chaos-app:
     build:
       context: .
@@ -11,11 +14,12 @@ services:
       LOG_LEVEL: INFO
       JSON_LOGS: "true"
       WEATHER_API_URL: http://weather-service:9000
+      # Route traces to the local Alloy container
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_SERVICE_NAME: chaos-service
     depends_on:
       - weather-service
-    # Tight memory limit so /memory-leak actually gets your container OOM-killed
-    # (great for observing restarts/alerts). Raise/remove this if that's not
-    # what you want right now.
+      - alloy
     deploy:
       resources:
         limits:
@@ -27,24 +31,40 @@ services:
       dockerfile: Dockerfile.weather
     ports:
       - "9000:9000"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_SERVICE_NAME: weather-service
+    depends_on:
+      - alloy
 
-  # prometheus:
-  #   image: prom/prometheus:latest
-  #   volumes:
-  #     - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-  #   ports:
-  #     - "9090:9090"
-  #   depends_on:
-  #     - chaos-app
+  # -------------------------------------
+  # OBSERVABILITY STACK
+  # -------------------------------------
+  loki:
+    image: grafana/loki:3.0.0
+    ports:
+      - "3100:3100" # Expose to host so Host-Grafana can connect to localhost:3100
+    command: -config.file=/etc/loki/local-config.yaml
 
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     GF_SECURITY_ADMIN_PASSWORD: admin
-  #     GF_AUTH_ANONYMOUS_ENABLED: "true"
-  #   volumes:
-  #     - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
-  #   depends_on:
-  #     - prometheus
+  tempo:
+    image: grafana/tempo:2.5.0
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200" # Expose to host so Host-Grafana can connect to localhost:3200
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy
+      # Mount the Docker socket so Alloy can read the container logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: [
+      "run",
+      "--server.http.listen-addr=0.0.0.0:12345",
+      "/etc/alloy/config.alloy"
+    ]
+    depends_on:
+      - loki
+      - tempo
