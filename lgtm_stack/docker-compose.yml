@@ -56,6 +56,8 @@ services:
 
   alloy:
     image: grafana/alloy:latest
+    ports:
+      - "4318:4318" # Expose to host so Host-Grafana can connect to localhost:12345
     volumes:
       - ./config.alloy:/etc/alloy/config.alloy
       # Mount the Docker socket so Alloy can read the container logs
