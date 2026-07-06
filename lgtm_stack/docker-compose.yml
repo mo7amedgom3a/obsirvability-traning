@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  chaos-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      LOG_LEVEL: INFO
+      JSON_LOGS: "true"
+      WEATHER_API_URL: http://weather-service:9000
+    depends_on:
+      - weather-service
+    # Tight memory limit so /memory-leak actually gets your container OOM-killed
+    # (great for observing restarts/alerts). Raise/remove this if that's not
+    # what you want right now.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  weather-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.weather
+    ports:
+      - "9000:9000"
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   volumes:
+  #     - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #   ports:
+  #     - "9090:9090"
+  #   depends_on:
+  #     - chaos-app
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     GF_SECURITY_ADMIN_PASSWORD: admin
+  #     GF_AUTH_ANONYMOUS_ENABLED: "true"
+  #   volumes:
+  #     - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+  #   depends_on:
+  #     - prometheus

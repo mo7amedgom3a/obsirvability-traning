@@ -1,0 +1,12 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY weather_service/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY weather_service ./weather_service
+
+EXPOSE 9000
+
+CMD ["uvicorn", "weather_service.main:app", "--host", "0.0.0.0", "--port", "9000"]
