@@ -65,6 +65,9 @@ services:
     command: ["-config.file=/etc/mimir.yaml"]
     ports:
       - "9009:9009"
+    volumes:
+      - ./mimir.yaml:/etc/mimir.yaml:ro
+      - mimir-data:/data/mimir
   alloy:
     image: grafana/alloy:latest
     ports:
@@ -81,3 +84,6 @@ services:
     depends_on:
       - loki
       - tempo
+
+volumes:
+  mimir-data:

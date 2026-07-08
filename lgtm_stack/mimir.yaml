@@ -1,0 +1,42 @@
+# mimir.yaml
+target: all
+
+# Disable multi-tenancy for local development so you don't need to pass org headers
+multitenancy_enabled: false
+
+server:
+  http_listen_port: 9009
+  log_level: info
+
+# Configure Mimir to use the local disk instead of S3 buckets
+blocks_storage:
+  backend: filesystem
+  bucket_store:
+    sync_dir: /data/mimir/tsdb-sync
+  filesystem:
+    dir: /data/mimir/data
+  tsdb:
+    dir: /data/mimir/tsdb
+
+compactor:
+  data_dir: /data/mimir/compactor
+  sharding_ring:
+    kvstore:
+      store: inmemory
+
+distributor:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+ingester:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+    replication_factor: 1
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
