@@ -60,7 +60,11 @@ services:
       - ./tempo.yaml:/etc/tempo.yaml
     ports:
       - "3200:3200" # Expose to host so Host-Grafana can connect to localhost:3200
-
+  mimir:
+    image: grafana/mimir:latest
+    command: ["-config.file=/etc/mimir.yaml"]
+    ports:
+      - "9009:9009"
   alloy:
     image: grafana/alloy:latest
     ports:

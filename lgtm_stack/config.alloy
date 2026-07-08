@@ -62,3 +62,9 @@ otelcol.exporter.otlp "tempo" {
     }
   }
 }
+// Push metrics to Mimir
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+  }
+}

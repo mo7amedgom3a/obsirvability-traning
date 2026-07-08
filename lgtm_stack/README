@@ -1,0 +1,47 @@
+# High-Performance Hybrid Observability Engine (LGTM Architecture)
+
+This repository holds the architecture and configuration orchestration to instantiate a unified, highly integrated observability pipeline on an EC2 instance. The infrastructure mixes native OS system daemons for bare-metal metrics gathering with an agile, containerized Docker Compose loop for distributed logging and tracing topologies.
+
+---
+
+## Observability Architecture Map
+
+The interaction mesh highlights how components isolated inside Docker interact seamlessly with system infrastructure and data planes via precise port boundaries.
+
+```mermaid
+graph TD
+    subgraph Host_Machine ["EC2 Linux Host Environment"]
+        Prometheus["Prometheus Daemon (:9090)"]
+        NodeExporter["Node Exporter Daemon (:9100)"]
+        Grafana["Grafana Server Dashboard (:3000)"]
+    end
+
+    subgraph Container_Fabric ["Docker Compose Bridge Network"]
+        direction TB
+        ChaosApp["chaos-app <br> (FastAPI / Uvicorn)"]
+        WeatherApp["weather-service <br> (Backend)"]
+        Alloy["Grafana Alloy Container (:4317/:4318)"]
+        Loki["Grafana Loki Engine (:3100)"]
+        Tempo["Grafana Tempo Engine (:3200)"]
+    end
+
+    %% Infrastructure Metrics Collection
+    NodeExporter -->|Exposes Host OS Metrics| Prometheus
+    Prometheus -->|Scrapes Self & Exporter| Prometheus
+
+    %% Application Logs Loop
+    ChaosApp -.->|Emits JSON stdout| DockerSocket[("/var/run/docker.sock")]
+    WeatherApp -.->|Emits JSON stdout| DockerSocket
+    DockerSocket --->|Scraped via Socket Mount| Alloy
+    Alloy --->|Pushes Structured LogQL Streams| Loki
+
+    %% OpenTelemetry Traces Loop
+    ChaosApp ===>|Auto-Instrumented OTLP gRPC| Alloy
+    WeatherApp ===>|Auto-Instrumented OTLP gRPC| Alloy
+    Alloy ===>|Forwards OTLP Batches :4327| Tempo
+
+    %% Consumption Layer Connections
+    Grafana -->|Queries Prometheus TSDB| Prometheus
+    Grafana -->|Queries Log Streams via HTTP| Loki
+    Grafana -->|Queries Traces via HTTP| Tempo
+    Tempo -.->|Trace-To-Logs Correlation Link| Loki
