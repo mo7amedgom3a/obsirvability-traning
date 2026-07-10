@@ -140,12 +140,12 @@ metrics_generator:
       source: tempo
   storage:
     path: /tmp/tempo/generator/wal
-  remote_write:
-    - url: http://mimir:9009/api/v1/push
-      send_exemplars: true
-  processors:
-    - service-graphs
-    - span-metrics
+    remote_write:
+      - url: http://mimir:9009/api/v1/push
+        send_exemplars: true
+  processor:
+    service-graphs: {}
+    span-metrics: {}
 
 overrides:
   defaults:
