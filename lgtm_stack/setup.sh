@@ -144,8 +144,8 @@ metrics_generator:
       - url: http://mimir:9009/api/v1/push
         send_exemplars: true
   processor:
-    service-graphs: {}
-    span-metrics: {}
+    service_graphs: {}
+    span_metrics: {}
 
 overrides:
   defaults:
