@@ -133,6 +133,24 @@ storage:
       path: /tmp/tempo/wal
     local:
       path: /tmp/tempo/blocks
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  storage:
+    path: /tmp/tempo/generator/wal
+  remote_write:
+    - url: http://mimir:9009/api/v1/push
+      send_exemplars: true
+  processors:
+    - service-graphs
+    - span-metrics
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics]
 EOF
 
 cat <<EOF > "${WORKDIR}/config.alloy"
